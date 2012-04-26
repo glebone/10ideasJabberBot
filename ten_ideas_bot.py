@@ -34,7 +34,7 @@ class TenIdeasBot(JabberBot):
     @botcmd
     def add_idea(self, mess, args):
         print(args[0])
-        status = POST(self.host+"ideas.json", params={'idea' : args[0], 'auth_token' : self.auth_token})
+        status = POST(self.host+"/ideas.json", params={'idea' : args[0], 'auth_token' : self.auth_token})
         print status
         return status
 
@@ -45,8 +45,6 @@ if __name__ == '__main__':
         """ % sys.argv[0]
 
     username, password = sys.argv[1:]
-    auth_token = "0"
-    cur_host = "http://127.0.0.1:3000"
     ideas_bot = TenIdeasBot(username, password)
     ideas_bot.serve_forever()
 
