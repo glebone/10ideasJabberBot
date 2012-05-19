@@ -15,7 +15,6 @@ class TenIdeasBot(JabberBot):
     auth_token = "0"
     cur_host = "http://127.0.0.1"
 
-
     @botcmd
     def register(self, mess, args):
         str_args = args.split(" ")
@@ -25,15 +24,10 @@ class TenIdeasBot(JabberBot):
             return "error"
         print str_args[0]
         print str_args[1]
-        ha = POST(self.cur_host+"/users.json",params={'user[email]' : str_args[0], "user[password]" : str_args[1]}, async=False)
-        auth_dic =  json.loads(ha)
-        print auth_dic
-        print  mess.getFrom().getStripped()
-        print auth_dic["auth_token"]
-        self.my_cursor.execute('insert into users (name, token, jabber) values(?, ?, ?)', (str_args[0], auth_dic["auth_token"], mess.getFrom().getStripped()))
-        print "fgdfgdfg"
-        self.my_connection.commit
-        return auth_dic["auth_token"]
+        ha = POST(self.cur_host+"/users.json",params={'user[email]' : str_args[0], "user[password]" : str_args[1]})
+        print ha
+        print json.loads(ha)
+        return self.auth_token
 
     @botcmd
     def doauth(self, mess, args):
@@ -66,8 +60,13 @@ class TenIdeasBot(JabberBot):
 
     @botcmd
     def add_idea(self, mess, args):
+<<<<<<< HEAD
         print(args)
-        status = POST(self.cur_host+"/ideas.json?auth_token="+self.auth_token, params={'idea[essential]' : args}, async=False)
+        status = POST(self.cur_host+"/ideas.json", params={'idea' : args, 'auth_token' : self.auth_token})
+=======
+        print(args[0])
+        status = POST(self.host+"/ideas.json", params={'idea' : args[0], 'auth_token' : self.auth_token})
+>>>>>>> fee2b3d7dfe2cc63ede5155f2749580fac2770bf
         print status
         return status
 
@@ -78,12 +77,13 @@ if __name__ == '__main__':
         """ % sys.argv[0]
 
     username, password = sys.argv[1:]
+<<<<<<< HEAD
     auth_token = "0"
     cur_host = "http://127.0.0.1"
+=======
+>>>>>>> fee2b3d7dfe2cc63ede5155f2749580fac2770bf
     ideas_bot = TenIdeasBot(username, password)
-    my_connection = sqlite.connect('ideas_bot.sqlite')
-    my_cursor = my_connection.cursor()
-    my_cursor.execute('insert into users (name, token, jabber) values(?, ?, ?)', ("dsdf", "dsfsdf", "fdsfsdfdsfsf"))
-    my_connection.commit
+    #connection = sqlite.connect('ideas_bot.sqlite')
+    #cursor = connection.cursor()
     ideas_bot.serve_forever()
 
