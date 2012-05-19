@@ -17,14 +17,38 @@ class TenIdeasBot(JabberBot):
 
     @botcmd
     def register(self, mess, args):
-        self.auth_token = POST(self.host+"/users",params={'user[email]' : 'glebone@yandex.ru', "user[password]" : '123123'})
-        print self.auth_token
+        str_args = args.split(" ")
+        print "8797"
+        print str_args
+        if len(str_args) < 2:
+            return "error"
+        print str_args[0]
+        print str_args[1]
+        ha = POST(self.cur_host+"/users.json",params={'user[email]' : str_args[0], "user[password]" : str_args[1]})
+        print ha
+        print json.loads(ha)
         return self.auth_token
 
     @botcmd
     def doauth(self, mess, args):
         self.auth_token = "zFwrzUEQgrMNC2LGaxR1"
         return self.auth_token
+
+    @botcmd
+    def my_ideas(self, mess, args):
+        ideas = GET(self.cur_host+"/ideas.json", params={'auth_token' : self.auth_token})
+        ideas_array = json.loads(ideas)
+        print ideas_array
+        ideas_str = ""
+        print "2"
+        for cur_idea in ideas_array:
+            print "3"
+            print cur_idea
+            cur_idea_str = cur_idea['created_at'] + " - " + cur_idea['essential']
+            ideas_str += cur_idea_str
+        return ideas_str
+
+
 
     @botcmd
     def public_ideas(self, mess, args):
@@ -36,8 +60,8 @@ class TenIdeasBot(JabberBot):
 
     @botcmd
     def add_idea(self, mess, args):
-        print(args[0])
-        status = POST(self.host+"ideas.json", params={'idea' : args[0], 'auth_token' : self.auth_token})
+        print(args)
+        status = POST(self.cur_host+"/ideas.json", params={'idea' : args, 'auth_token' : self.auth_token})
         print status
         return status
 
