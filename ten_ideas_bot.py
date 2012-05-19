@@ -6,13 +6,14 @@
 import sys
 from restclient import GET, POST, PUT, DELETE
 import json
+from pysqlite2 import dbapi2 as sqlite
 
 from jabberbot import *
 
 class TenIdeasBot(JabberBot):
 
     auth_token = "0"
-    cur_host = "http://127.0.0.1:3000"
+    cur_host = "http://127.0.0.1"
 
     @botcmd
     def register(self, mess, args):
@@ -27,7 +28,9 @@ class TenIdeasBot(JabberBot):
 
     @botcmd
     def public_ideas(self, mess, args):
-        public = GET(self.host+"/ideas/public.json", params={'auth_token' : auth_token})
+        print self.cur_host
+        print self.auth_token
+        public = GET(self.cur_host+"/ideas/public.json", params={'auth_token' : self.auth_token})
         print public
         return public
 
@@ -46,7 +49,9 @@ if __name__ == '__main__':
 
     username, password = sys.argv[1:]
     auth_token = "0"
-    cur_host = "http://127.0.0.1:3000"
+    cur_host = "http://127.0.0.1"
     ideas_bot = TenIdeasBot(username, password)
+    #connection = sqlite.connect('ideas_bot.sqlite')
+    #cursor = connection.cursor()
     ideas_bot.serve_forever()
 
