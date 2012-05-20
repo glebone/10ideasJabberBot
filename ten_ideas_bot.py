@@ -13,7 +13,9 @@ from jabberbot import *
 class TenIdeasBot(JabberBot):
 
     auth_token = "0"
-    cur_host = "http://127.0.0.1"
+    cur_host = "http://127.0.0.1:3000"
+    db_name = "ideas_bot.sqlite"
+
 
 
     @botcmd
@@ -21,36 +23,50 @@ class TenIdeasBot(JabberBot):
         str_args = args.split(" ")
         print "8797"
         print str_args
-        if len(str_args) < 2:
-            return "error"
-        print str_args[0]
-        print str_args[1]
+        if len(str_args) != 2:
+            return "error! Pls enter email - password"
         ha = POST(self.cur_host+"/users.json",params={'user[email]' : str_args[0], "user[password]" : str_args[1]}, async=False)
         auth_dic =  json.loads(ha)
-        print auth_dic
-        print  mess.getFrom().getStripped()
         print auth_dic["auth_token"]
-        self.my_cursor.execute('insert into users (name, token, jabber) values(?, ?, ?)', (str_args[0], auth_dic["auth_token"], mess.getFrom().getStripped()))
+        print  mess.getFrom().getStripped()
+        connection = sqlite.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute('INSERT INTO users (name, token, jabber) VALUES(?, ?, ?)', (str_args[0], auth_dic["auth_token"], mess.getFrom().getStripped()))
         print "fgdfgdfg"
-        self.my_connection.commit
+        connection.commit()
+        cursor.close()
+        connection.close()
         return auth_dic["auth_token"]
 
     @botcmd
     def doauth(self, mess, args):
-        self.auth_token = "zFwrzUEQgrMNC2LGaxR1"
+        cur_jid = mess.getFrom().getStripped()
+        print cur_jid
+        connection = sqlite.connect(self.db_name)
+        cursor = connection.cursor()
+        cursor.execute('SELECT * FROM users WHERE jabber = ?', (cur_jid,))
+        print "fsdfsdf"
+        accounts = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        print accounts
+        print len(accounts)
+        if len(accounts) < 1:
+            return "Pls register first!"
+        cur_acc = accounts[0][2]
+        print cur_acc
+        self.auth_token = cur_acc
         return self.auth_token
 
     @botcmd
     def my_ideas(self, mess, args):
         ideas = GET(self.cur_host+"/ideas.json", params={'auth_token' : self.auth_token})
+        print ideas
         ideas_array = json.loads(ideas)
-        print ideas_array
         ideas_str = ""
-        print "2"
         for cur_idea in ideas_array:
-            print "3"
             print cur_idea
-            cur_idea_str = cur_idea['created_at'] + " - " + cur_idea['essential']
+            cur_idea_str = cur_idea['created_at'] + " - " + cur_idea['essential'] + "\n"
             ideas_str += cur_idea_str
         return ideas_str
 
@@ -71,6 +87,8 @@ class TenIdeasBot(JabberBot):
         print status
         return status
 
+
+
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         print >>sys.stderr, """
@@ -79,11 +97,12 @@ if __name__ == '__main__':
 
     username, password = sys.argv[1:]
     auth_token = "0"
-    cur_host = "http://127.0.0.1"
+    cur_host = "http://127.0.0.1:3000"
     ideas_bot = TenIdeasBot(username, password)
-    my_connection = sqlite.connect('ideas_bot.sqlite')
-    my_cursor = my_connection.cursor()
-    my_cursor.execute('insert into users (name, token, jabber) values(?, ?, ?)', ("dsdf", "dsfsdf", "fdsfsdfdsfsf"))
-    my_connection.commit
+
+    db_name = 'ideas_bot.sqlite'
+
+
+
     ideas_bot.serve_forever()
 
