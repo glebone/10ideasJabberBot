@@ -13,8 +13,9 @@ from jabberbot import *
 class TenIdeasBot(JabberBot):
 
     auth_token = "0"
-    cur_host = "http://127.0.0.1:3000"
+    cur_host = "http://stage.masterofcode.com:10101"
     db_name = "ideas_bot.sqlite"
+    prefetch_users = {}
 
 
 
@@ -36,56 +37,91 @@ class TenIdeasBot(JabberBot):
         connection.commit()
         cursor.close()
         connection.close()
+        self.prefetch_users[str_args[0]] =  auth_dic["auth_token"]
         return auth_dic["auth_token"]
 
-    @botcmd
-    def doauth(self, mess, args):
-        cur_jid = mess.getFrom().getStripped()
-        print cur_jid
-        connection = sqlite.connect(self.db_name)
-        cursor = connection.cursor()
-        cursor.execute('SELECT * FROM users WHERE jabber = ?', (cur_jid,))
-        print "fsdfsdf"
-        accounts = cursor.fetchall()
-        cursor.close()
-        connection.close()
-        print accounts
-        print len(accounts)
-        if len(accounts) < 1:
-            return "Pls register first!"
-        cur_acc = accounts[0][2]
-        print cur_acc
-        self.auth_token = cur_acc
-        return self.auth_token
-
-    @botcmd
-    def my_ideas(self, mess, args):
-        ideas = GET(self.cur_host+"/ideas.json", params={'auth_token' : self.auth_token})
-        print ideas
-        ideas_array = json.loads(ideas)
-        ideas_str = ""
-        for cur_idea in ideas_array:
-            print cur_idea
-            cur_idea_str = cur_idea['created_at'] + " - " + cur_idea['essential'] + "\n"
-            ideas_str += cur_idea_str
-        return ideas_str
 
 
 
     @botcmd
     def public_ideas(self, mess, args):
-        print self.cur_host
-        print self.auth_token
-        public = GET(self.cur_host+"/ideas/public.json", params={'auth_token' : self.auth_token})
-        print public
-        return public
+        cur_jid = mess.getFrom().getStripped()
+        if (self.check_user(cur_jid)):
+            cur_token = self.prefetch_users[cur_jid]
+            ideas = GET(self.cur_host+"/ideas/public.json", params={'auth_token' : cur_token})
+            print ideas
+            ideas_array = json.loads(ideas)
+            ideas_str = ""
+            for cur_idea in ideas_array:
+                print cur_idea
+                cur_idea_str = cur_idea['created_at'] + " - " + cur_idea['essential'] + "\n"
+                ideas_str += cur_idea_str
+            return ideas_str
+        else:
+            return "Pls register first!"
+
+
+
+    @botcmd
+    def my_ideas(self, mess, args):
+        cur_jid = mess.getFrom().getStripped()
+        if (self.check_user(cur_jid)):
+            cur_token = self.prefetch_users[cur_jid]
+            print cur_token
+            ideas = GET(self.cur_host+"/ideas.json", params={'auth_token' : cur_token})
+            print "!!!!!!!!!!!!"
+            print ideas
+            ideas_array = json.loads(ideas)
+            ideas_str = ""
+            for cur_idea in ideas_array:
+                print cur_idea
+                cur_idea_str = cur_idea['created_at'] + " - " + cur_idea['essential'] + "\n"
+                ideas_str += cur_idea_str
+            return ideas_str
+        else:
+            return "Pls register first!"
+
+
+
 
     @botcmd
     def add_idea(self, mess, args):
         print(args)
-        status = POST(self.cur_host+"/ideas.json?auth_token="+self.auth_token, params={'idea[essential]' : args}, async=False)
-        print status
-        return status
+        cur_jid = mess.getFrom().getStripped()
+        if (self.check_user(cur_jid)):
+            cur_token = self.prefetch_users[cur_jid]
+            print cur_token
+            status = POST(self.cur_host+"/ideas.json?auth_token="+cur_token, params={'idea[essential]' : args}, async=False)
+            print "!!!!!!!"
+            print status
+            return status
+        else:
+            return "Pls register first!"
+
+
+
+
+    def check_user(self, user_jid):
+        print "checking permissions"
+        if user_jid in self.prefetch_users:
+            print "have code"
+            return True
+        else:
+            print "no jid prefetched"
+            connection = sqlite.connect(self.db_name)
+            cursor = connection.cursor()
+            cursor.execute('SELECT * FROM users WHERE jabber = ?', (user_jid,))
+            accounts = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            print accounts
+            print len(accounts)
+            if len(accounts) < 1:
+                return False
+            cur_acc = accounts[0][2]
+            print cur_acc
+            self.prefetch_users.update({user_jid:cur_acc})
+            return True
 
 
 
@@ -97,7 +133,8 @@ if __name__ == '__main__':
 
     username, password = sys.argv[1:]
     auth_token = "0"
-    cur_host = "http://127.0.0.1:3000"
+    cur_host = "http://stage.masterofcode.com:10101"
+    prefetch_users = {}
     ideas_bot = TenIdeasBot(username, password)
 
     db_name = 'ideas_bot.sqlite'
