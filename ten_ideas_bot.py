@@ -28,17 +28,20 @@ class TenIdeasBot(JabberBot):
             return "error! Pls enter email - password"
         ha = POST(self.cur_host+"/users.json",params={'user[email]' : str_args[0], "user[password]" : str_args[1]}, async=False)
         auth_dic =  json.loads(ha)
-        print auth_dic["auth_token"]
-        print  mess.getFrom().getStripped()
-        connection = sqlite.connect(self.db_name)
-        cursor = connection.cursor()
-        cursor.execute('INSERT INTO users (name, token, jabber) VALUES(?, ?, ?)', (str_args[0], auth_dic["auth_token"], mess.getFrom().getStripped()))
-        print "fgdfgdfg"
-        connection.commit()
-        cursor.close()
-        connection.close()
-        self.prefetch_users[str_args[0]] =  auth_dic["auth_token"]
-        return auth_dic["auth_token"]
+        if 'auth_token' in auth_dic.keys():
+            print auth_dic["auth_token"]
+            print  mess.getFrom().getStripped()
+            connection = sqlite.connect(self.db_name)
+            cursor = connection.cursor()
+            cursor.execute('INSERT INTO users (name, token, jabber) VALUES(?, ?, ?)', (str_args[0], auth_dic["auth_token"], mess.getFrom().getStripped()))
+            print "fgdfgdfg"
+            connection.commit()
+            cursor.close()
+            connection.close()
+            self.prefetch_users[str_args[0]] =  auth_dic["auth_token"]
+            return auth_dic["auth_token"]
+        else:
+            return self.user_login(str_args[0], str_args[1])
 
 
 
@@ -122,6 +125,28 @@ class TenIdeasBot(JabberBot):
             print cur_acc
             self.prefetch_users.update({user_jid:cur_acc})
             return True
+
+
+    def user_login(self, cur_email, cur_pass):
+        ha = POST(self.cur_host+"/users/sign_in.json",params={'user[email]' : cur_email, "user[password]" : cur_pass}, async=False)
+        auth_dic =  json.loads(ha)
+        if 'auth_token' in auth_dic.keys():
+            print auth_dic["auth_token"]
+            connection = sqlite.connect(self.db_name)
+            cursor = connection.cursor()
+            cursor.execute('INSERT INTO users (name, token, jabber) VALUES(?, ?, ?)', (str_args[0], auth_dic["auth_token"], mess.getFrom().getStripped()))
+            print "fgdfgdfg"
+            connection.commit()
+            cursor.close()
+            connection.close()
+            self.prefetch_users[str_args[0]] =  auth_dic["auth_token"]
+            return auth_dic["auth_token"]
+        else:
+            return "Login failed"
+
+
+
+
 
 
 
