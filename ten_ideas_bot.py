@@ -34,12 +34,11 @@ class TenIdeasBot(JabberBot):
             connection = sqlite.connect(self.db_name)
             cursor = connection.cursor()
             cursor.execute('INSERT INTO users (name, token, jabber) VALUES(?, ?, ?)', (str_args[0], auth_dic["auth_token"], mess.getFrom().getStripped()))
-            print "fgdfgdfg"
             connection.commit()
             cursor.close()
             connection.close()
             self.prefetch_users[str_args[0]] =  auth_dic["auth_token"]
-            return auth_dic["auth_token"]
+            return "Email registered"
         else:
             return self.user_login(str_args[0], str_args[1])
 
@@ -72,7 +71,6 @@ class TenIdeasBot(JabberBot):
             cur_token = self.prefetch_users[cur_jid]
             print cur_token
             ideas = GET(self.cur_host+"/ideas.json", params={'auth_token' : cur_token})
-            print "!!!!!!!!!!!!"
             print ideas
             ideas_array = json.loads(ideas)
             ideas_str = ""
@@ -95,9 +93,8 @@ class TenIdeasBot(JabberBot):
             cur_token = self.prefetch_users[cur_jid]
             print cur_token
             status = POST(self.cur_host+"/ideas.json?auth_token="+cur_token, params={'idea[essential]' : args}, async=False)
-            print "!!!!!!!"
             print status
-            return status
+            return "Idea posted"
         else:
             return "Pls register first!"
 
@@ -140,7 +137,7 @@ class TenIdeasBot(JabberBot):
             cursor.close()
             connection.close()
             self.prefetch_users[str_args[0]] =  auth_dic["auth_token"]
-            return auth_dic["auth_token"]
+            return "Loged in"
         else:
             return "Login failed"
 
